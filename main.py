@@ -1,5 +1,13 @@
+#!/usr/bin/env python3
+# -*- coding: <utf-8> -*-
+#  required commands
+#  pip3 install numpy
 from numpy import exp, array, random, dot
+import obtainer
+import sys
 
+trainAmount = 1000000  #  Amount of learning iterations
+dataAmount = 100  #  Quantity of training data to generate
 
 class NeuronLayer():
     def __init__(self, number_of_neurons, number_of_inputs_per_neuron):
@@ -26,7 +34,7 @@ class NeuralNetwork():
     # We train the neural network through a process of trial and error.
     # Adjusting the synaptic weights each time.
     def train(self, training_set_inputs, training_set_outputs, number_of_training_iterations):
-        for iteration in xrange(number_of_training_iterations):
+        for iteration in range(number_of_training_iterations):
             # Pass the training set through our neural network
             output_from_layer_1, output_from_layer_2 = self.think(training_set_inputs)
 
@@ -47,7 +55,13 @@ class NeuralNetwork():
             # Adjust the weights.
             self.layer1.synaptic_weights += layer1_adjustment
             self.layer2.synaptic_weights += layer2_adjustment
-
+            
+            #  Display weight information for all layers, and make an estimate at this stage
+            if iteration % 5000 == 0 and iteration != 0:
+                #self.print_weights(iteration)
+                hidden_state, output = neural_network.think(array([1, 1, 0]))
+                print("\u001b[33m"+str(output)+"\u001b[0m\n")
+                
     # The neural network thinks.
     def think(self, inputs):
         output_from_layer1 = self.__sigmoid(dot(inputs, self.layer1.synaptic_weights))
@@ -55,16 +69,20 @@ class NeuralNetwork():
         return output_from_layer1, output_from_layer2
 
     # The neural network prints its weights
-    def print_weights(self):
-        print("    Layer 1 (4 neurons, each with 3 inputs): ")
-        print(self.layer1.synaptic_weights)
-        print("    Layer 2 (1 neuron, with 4 inputs):")
-        print(self.layer2.synaptic_weights)
+    def print_weights(self,iteration):
+        print("\u001b[33mSynaptic weights after "+ str(iteration) +" iterations\u001b[0m")
+        sys.stdout.write("\u001b[36m    Layer 1 (4 neurons, each with 3 inputs): \n")
+        sys.stdout.write(str(self.layer1.synaptic_weights)+('\n'))
+        sys.stdout.write("    Layer 2 (1 neuron, with 4 inputs):\n")
+        sys.stdout.write(str(self.layer2.synaptic_weights)+'\n')
+        sys.stdout.write('\u001b[0m\n')
 
 if __name__ == "__main__":
 
+    obtainer.maker(dataAmount)
+    
     #Seed the random number generator
-    random.seed(1)
+    #random.seed(1)
 
     # Create layer 1 (4 neurons, each with 3 inputs)
     layer1 = NeuronLayer(4, 3)
@@ -75,22 +93,24 @@ if __name__ == "__main__":
     # Combine the layers to create a neural network
     neural_network = NeuralNetwork(layer1, layer2)
 
-    print("Stage 1) Random starting synaptic weights: ")
-    neural_network.print_weights()
+    print("\u001b[33mStage 1) Random starting synaptic weights: \u001b[0m")
+    neural_network.print_weights(0)
 
-    # The training set. We have 7 examples, each consisting of 3 input values
+    # The training set. We have 100 examples, each consisting of 3 input values
     # and 1 output value.
-    training_set_inputs = array([[0, 0, 1], [0, 1, 1], [1, 0, 1], [0, 1, 0], [1, 0, 0], [1, 1, 1], [0, 0, 0]])
-    training_set_outputs = array([[0, 1, 1, 1, 1, 0, 0]]).T
+    training_set_inputs = array(obtainer.getData())
+    training_set_outputs = array([obtainer.getAns()]).T
 
     # Train the neural network using the training set.
-    # Do it 60,000 times and make small adjustments each time.
-    neural_network.train(training_set_inputs, training_set_outputs, 60000)
+    # Do it X times and make small adjustments each time.
+    neural_network.train(training_set_inputs, training_set_outputs, trainAmount)
 
-    print("Stage 2) New synaptic weights after training: ")
-    neural_network.print_weights()
-
+    print("\u001b[33mStage 2) New synaptic weights after training: \u001b[0m")
+    neural_network.print_weights(trainAmount)
+    
+    print("Training " + str(trainAmount) + " times!!\n") 
+    
     # Test the neural network with a new situation.
-    print("Stage 3) Considering a new situation [1, 1, 0] -> ?: ")
+    print("\u001b[33mStage 3) Considering a new situation [1, 1, 0] -> ?: \u001b[0m")
     hidden_state, output = neural_network.think(array([1, 1, 0]))
-    print(output)
+    print("\u001b[33m"+str(output)+"\u001b[0m")
