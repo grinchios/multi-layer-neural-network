@@ -1,17 +1,21 @@
 #!/usr/bin/env python3
 # -*- coding: <utf-8> -*-
 
-
-from numpy import exp, array, random, dot
-import numpy as np
-import matplotlib.pyplot as plt
+from numpy import exp, random, dot, save, load
 from os import system
 import sys
-import utils
+import configparser
+from src import utils
 
 #  output debug data
-debug = True
+config = configparser.ConfigParser()
+config.read('database/neuralNetwork.ini')
 
+debug = config.getboolean('debug', 'debug')
+display = config.getboolean('graph', 'display')
+
+if display is True:
+    import matplotlib.pyplot as plt
 
 class NeuronLayer():
     def __init__(self, number_of_neurons, number_of_inputs_per_neuron):
@@ -40,7 +44,7 @@ class NeuralNetwork():
     # We train the neural network through a process of trial and error.
     # Adjusting the synaptic weights each time.
     def train(self, training_set_inputs, training_set_outputs, number_of_training_iterations):
-        for iteration in range(number_of_training_iterations):
+        for self.iteration in range(number_of_training_iterations):
             # Pass the training set through our neural network
             output_from_layer_1, output_from_layer_2 = self.think(training_set_inputs)
 
@@ -54,7 +58,7 @@ class NeuralNetwork():
             layer1_error = layer2_delta.dot(self.layer2.synaptic_weights.T)
             layer1_delta = layer1_error * self.__sigmoid_derivative(output_from_layer_1)
 
-            # Calculate how much to adjust the weights by
+            # Calculate how much to adjust the weights byFalse
             layer1_adjustment = training_set_inputs.T.dot(layer1_delta)
             layer2_adjustment = output_from_layer_1.T.dot(layer2_delta)
 
@@ -62,20 +66,37 @@ class NeuralNetwork():
             self.layer1.synaptic_weights += layer1_adjustment
             self.layer2.synaptic_weights += layer2_adjustment
             
-            #  Display weight information for all layers, and make an estimate at this stage
-            if iteration % 5000 == 0 and iteration != 0 and debug == True:
-                self.print_weights(iteration)
-                
-                #  output a guess at current iteration
+            outputs = self.iteration % 5000 == 0 and self.iteration != 0
+            if outputs is True:
+            
+                #  output weights and a guess at current iteration
+                self.print_weights(self.iteration)
                 hidden_state, output = self.think(self.arrGuess)
                 print("\u001b[33m"+str(output)+"\u001b[0m\n")
-                utils.progress(iteration,trainAmount,status="I'm thinkingggggg")
-                
-                #  add current guess to graph
-                plt.plot(iteration,output,'-o',linestyle='-')
-                plt.show()
-                plt.pause(0.001)           
-                
+            
+                #  Display weight information for all layers, and make an estimate at this stage
+                if (outputs and debug and display) is True:
+
+                    #  add current guess to graph
+                    plt.plot(self.iteration, output, '-o')
+                    plt.show()
+                    plt.pause(0.001)
+
+            utils.progress(self.iteration, number_of_training_iterations, status="I'm thinking...")
+
+    #  Saves the current neurons of the system and other critical information
+    def saveNeurons(self):
+        save('database/layer1', self.layer1.synaptic_weights)
+        save('database/layer2', self.layer2.synaptic_weights)
+        config.set('main.py', 'trainDepth', str(self.iteration))
+        print(self.iteration)
+        config.write(open('database.neuralNetwork.ini','w'))
+
+    #  Uses numpy to load the files back into the neurons
+    def readNeurons(self):
+        self.layer1.synaptic_weights = load('database/layer1.npy')
+        self.layer2.synaptic_weights = load('database/layer2.npy')
+
     # The neural network thinks.
     def think(self, inputs):
         output_from_layer1 = self.__sigmoid(dot(inputs, self.layer1.synaptic_weights))
@@ -85,9 +106,9 @@ class NeuralNetwork():
     # The neural network prints its weights
     def print_weights(self,iteration):
         system('clear')
-        sys.stdout.write("\u001b[33mSynaptic weights after "+ str(iteration) +" iterations\u001b[0m")
-        sys.stdout.write("\u001b[36m    Layer 1 (5 neurons, each with 4 inputs): \n")
-        sys.stdout.write(str(self.layer1.synaptic_weights)+('\n'))
-        sys.stdout.write("    Layer 2 (1 neuron, with 5 inputs):\n")
-        sys.stdout.write(str(self.layer2.synaptic_weights)+'\n')
+        sys.stdout.write("\u001b[33mSynaptic weights after " + str(iteration) + " iterations\u001b[0m")
+        sys.stdout.write("\u001b[36m\nLayer 1 (5 neurons, each with 4 inputs): \n")
+        sys.stdout.write(str(self.layer1.synaptic_weights) + '\n')
+        sys.stdout.write("\nLayer 2 (1 neuron, with 5 inputs):\n")
+        sys.stdout.write(str(self.layer2.synaptic_weights) + '\n')
         sys.stdout.write('\u001b[0m\n')
