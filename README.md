@@ -15,4 +15,4 @@ Multi-core support
 Nicer interface
 
 ## Credit
-Adapted from Milo Harpers solution, brought into Python3 and futher upgraded by Callum Pritchard
+Latest backup: Wed Aug 21 09:50:25 UTC 2019
